@@ -1,0 +1,12 @@
+Hurricane
+by Take Vos (2014)
+
+Hurricane is a build system for languages which needs to be compiled in-order.
+The order is based on dependencies inside the source files. Primarily this
+build system was made to compile HDL languages like VHDL, SystemVerilog and Verilog.
+
+You can find the documentation in doc/index.html.
+The documentation is also online at: http://takev.github.io/hurricane/doc/index.html
+
+This application is released under the BSD 2-Clause License.
+

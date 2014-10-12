@@ -24,20 +24,39 @@
  */
 #ifndef TAKEVOS_HURRICANE_VHDLSOURCEFILE_H
 #define TAKEVOS_HURRICANE_VHDLSOURCEFILE_H
-#include <stdbool.h>
-#include <string>
-#include <boost/filesystem.hpp>
 #include "SourceFile.h"
-
-namespace fs = boost::filesystem;
 
 namespace takevos {
 namespace hurricane {
 
 class VHDLSourceFile : SourceFile {
 public:
-    VHDLSourceFile(ProjectConfiguration const &project_configuration, LibraryConfiguration const &library_configuration, fs::path const &filename);
+    static const int library_pragma             = 1;
+    static const int translate_pragma           = 2;
+    static const int library_statement          = 3;
+    static const int use_statement              = 4;
+    static const int entity_instantiation       = 5;
+    static const int package_declaration        = 6;
+    static const int entity_declaration         = 7;
+    static const int architecture_declaration   = 8;
+    static const Tokenizer vhdl_tokenizer;
+
+    VHDLSourceFile(fs::path const &filename);
     
+private:
+    bool                        translating;
+    std::string                 destination_library;
+    std::vector<std::string>    imported_libraries;
+
+    void handle_library_pragma(std::string name);
+    void handle_translate_pragma(std::string value);
+    void handle_library_statement(std::string name);
+    void handle_use_statement(std::string name);
+    void handle_entity_instantiation(std::string library_name, std::string entity_name, std::string architecture_name);
+    void handle_package_declaration(std::string name);
+    void handle_entity_declaration(std::string name);
+    void handle_architecture_declaration(std::string name, std::string entity_name);
+    void parse(char const * const text, size_t text_size);
 };
 
 }}

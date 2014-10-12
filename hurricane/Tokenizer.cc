@@ -33,7 +33,7 @@ namespace takevos {
 namespace hurricane {
 
 Token::Token() :
-    code(0)
+    code(Token::sentinal)
 {
 }
 
@@ -108,7 +108,7 @@ Tokenizer::Tokenizer(int code1, char const * const pattern1, ...)
         regex_t     tmp_pattern_re;
 
         // Compile each pattern to extract the number of sub-expressions in each pattern.
-        errcode = regcomp(&tmp_pattern_re, tmp_pattern, REG_EXTENDED);
+        errcode = regcomp(&tmp_pattern_re, tmp_pattern, REG_EXTENDED | REG_ENHANCED | REG_NEWLINE | REG_ICASE);
         if (errcode != 0) {
             regerror(errcode, &tmp_pattern_re, errstr, sizeof (errstr) - 1);
             fprintf(stderr, "ERROR compiling pattern '%s': %s\n", tmp_pattern, errstr);
@@ -116,7 +116,7 @@ Tokenizer::Tokenizer(int code1, char const * const pattern1, ...)
         }
 
         // Append each pattern into a large pattern.
-        SubPattern sub_pattern(tmp_code, tmp_pattern_re.re_nsub);
+        SubPattern sub_pattern(tmp_code, (int)tmp_pattern_re.re_nsub);
         combined_pattern += tmp_pattern;
 
         sub_patterns.push_back(sub_pattern);
@@ -125,7 +125,7 @@ Tokenizer::Tokenizer(int code1, char const * const pattern1, ...)
 
         // Get the next code and pattern.
         tmp_code    = va_arg(ap, int);
-        if (tmp_code == 0) {
+        if (tmp_code == Token::sentinal) {
             // Last pattern.
             combined_pattern += ")";
             break;
@@ -138,7 +138,7 @@ Tokenizer::Tokenizer(int code1, char const * const pattern1, ...)
     va_end(ap);
 
     // Compile the large pattern.
-    errcode = regcomp(&combined_pattern_re, combined_pattern.c_str(), REG_EXTENDED);
+    errcode = regcomp(&combined_pattern_re, combined_pattern.c_str(), REG_EXTENDED | REG_ENHANCED | REG_NEWLINE);
     if (errcode != 0) {
         regerror(errcode, &combined_pattern_re, errstr, sizeof (errstr) - 1);
         fprintf(stderr, "ERROR compiling combined pattern '%s': %s\n", combined_pattern.c_str(), errstr);
@@ -151,7 +151,7 @@ Tokenizer::~Tokenizer()
     regfree(&combined_pattern_re);
 }
 
-Token Tokenizer::parse(char const * const text, size_t text_size, int &offset)
+Token Tokenizer::tokenize(char const * const text, size_t text_size, int &offset) const
 {
     Token       token;
     int         errcode;
@@ -168,7 +168,7 @@ Token Tokenizer::parse(char const * const text, size_t text_size, int &offset)
     case 0:
         // The first sub pattern starts at index 1.
         i = 1;
-        for (auto sub_pattern: sub_patterns) {
+        for (auto &sub_pattern: sub_patterns) {
             // Check if the main sub-expression around each sub-pattern is in use.
             if (match[i].rm_so >= 0 && match[i].rm_eo >= 0) {
                 token.code = sub_pattern.code;
@@ -200,51 +200,23 @@ Token Tokenizer::parse(char const * const text, size_t text_size, int &offset)
     }
 }
 
-TokenizerRange Tokenizer::parse(char const * const text, size_t text_size)
+std::vector<Token> Tokenizer::tokenize(char const * const text, size_t text_size) const
 {
-    TokenizerRange  range(this);
-    int             offset = 0;
+    std::vector<Token>  tokens;
+    int                 offset = 0;
 
     while (true) {
         // offset is an inout argument.
-        Token token = parse(text, text_size, offset);
+        Token token = tokenize(text, text_size, offset);
         if (offset == -1) {
             break;
         }
-        range.tokens.push_back(token);
+        if (token.code != Token::suppress) {
+            // Zero tokens are ignored, used for filtering comments and such.
+            tokens.push_back(token);
+        }
     }
-    return range;
-}
-
-TokenizerRange::TokenizerRange(Tokenizer const * const tokenizer) :
-    tokenizer(tokenizer)
-{
-}
-
-TokenizerIterator TokenizerRange::begin(void) const {
-    return TokenizerIterator(this, 0);
-}
-
-TokenizerIterator TokenizerRange::end(void) const {
-    return TokenizerIterator(this, tokens.size());
-}
-
-TokenizerIterator::TokenizerIterator(TokenizerRange const * const tokenizer_range, off_t i) :
-    tokenizer_range(tokenizer_range), i(i)
-{
-}
-
-const TokenizerIterator &TokenizerIterator::operator++() {
-    i++;
-    return *this;
-}
-
-bool TokenizerIterator::operator!=(const TokenizerIterator &other) const {
-    return i != other.i;
-}
-
-Token TokenizerIterator::operator*() const {
-    return tokenizer_range->tokens[i];
+    return tokens;
 }
 
 }}

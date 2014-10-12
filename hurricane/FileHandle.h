@@ -22,50 +22,27 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef TAKEVOS_HURRICANE_PATTERN_H
-#define TAKEVOS_HURRICANE_PATTERN_H
+#ifndef TAKEVOS_HURRICANE_FILEHANDLE_H
+#define TAKEVOS_HURRICANE_FILEHANDLE_H
 #include <string>
-#include <vector>
-#include <iostream>
-#include <regex.h>
-#include "Options.h"
+#include <sys/stat.h>
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 namespace takevos {
 namespace hurricane {
 
+struct FileHandle {
+    fs::path    filename;
+    int         fd;
+    const char  *data;
+    size_t      data_size;
 
-/** A regex patern.
- */
-struct Pattern {
-    int                 code;
-    regex_t             pattern;
-
-    /** Initialize a pattern.
-     *
-     * @param code          to return in a match.
-     * @param pattern_text  A regex-string pattern.
-     */
-    Pattern(int code, const std::string &pattern_text);
-
-    /** Free the regex being created by the constructor.
-     */
-    ~Pattern();
-
-    /** Search the pattern in the text.
-     * @param token     The returned token, the value of the token will be overwritten.
-     * @param text      The text to search.
-     * @param text_size The size of the text.
-     * @param offset    The offset in the text to start the search.
-     * @return          The offset behind the match, or -1 if no match is found.
-     */
-    off_t search(Token &token, char const * const text, size_t text_size, off_t offset) const;
-
-    /** Search for all tokens in the text.
-     * @param text      The text to search.
-     * @param text_size The size of the text.
-     * @return          A list of tokens, sorted by the offset in the text.
-     */
-    std::vector<Token> search(char const * const text, size_t text_size) const;
+    FileHandle(const fs::path &filename);
+    ~FileHandle();
+    void open(void);
+    void close(void);
 };
 
 }}

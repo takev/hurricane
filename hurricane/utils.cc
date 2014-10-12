@@ -23,19 +23,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
 #include "utils.h"
 
 namespace takevos {
 namespace hurricane {
 
-tuple<path,path> path_split(path const & path)
+std::tuple<boost::filesystem::path,boost::filesystem::path> path_split(boost::filesystem::path const & path)
 {
-    auto                    _path = path.string();
-    size_t                  i;
-    pair<string,string>     r;
+    auto                                _path = path.string();
+    size_t                              i;
+    std::pair<std::string,std::string>  r;
 
     i = _path.find_last_of('/');
-    if (i == string::npos) {
+    if (i == std::string::npos) {
         // No '/' in path, so it is just a file.
         return make_tuple(
             "",
@@ -46,27 +50,27 @@ tuple<path,path> path_split(path const & path)
         // Leaf the root slash when it is there.
         return make_tuple(
             "/",
-            _path.substr(i + 1, string::npos)
+            _path.substr(i + 1, std::string::npos)
         );
 
     } else {
         // Simply split the path.
         return make_tuple(
             _path.substr(0, i),
-            _path.substr(i + 1, string::npos)
+            _path.substr(i + 1, std::string::npos)
         );
     }
 }
 
-vector<path> super_directories_with_file(path const & directory, path const & filename)
+std::vector<boost::filesystem::path> super_directories_with_file(boost::filesystem::path const & directory, boost::filesystem::path const & filename)
 {
     if (directory.empty()) {
         // We have completely finished.
-        return vector<path>();
+        return std::vector<boost::filesystem::path>();
     }
 
     if (canonical(directory) != directory) {
-        throw invalid_argument("Directory is not canonical.");
+        throw std::invalid_argument("Directory is not canonical.");
     }
 
     // Recurse toward root.
@@ -80,23 +84,83 @@ vector<path> super_directories_with_file(path const & directory, path const & fi
     return r;
 }
 
-path furthest_super_directory_with_file(path const & directory, path const & filename)
+boost::filesystem::path furthest_super_directory_with_file(boost::filesystem::path const & directory, boost::filesystem::path const & filename)
 {
     auto directories = super_directories_with_file(directory, filename);
     return directories.front();
 }
 
-path nearest_super_directory_with_file(path const & directory, path const & filename)
+boost::filesystem::path nearest_super_directory_with_file(boost::filesystem::path const & directory, boost::filesystem::path const & filename)
 {
     auto directories = super_directories_with_file(directory, filename);
     return directories.back();
 }
 
 
-vector<path> search_file_in_subdirectories(path const & directory, vector<string> extensions)
+std::vector<boost::filesystem::path> search_file_in_subdirectories(boost::filesystem::path const & directory, std::vector<std::string> extensions)
 {
+    std::vector<boost::filesystem::path>   tmp;
     //recursive_directory_iterator i = directory;
-    //for (auto 
+    //for (auto
+    return tmp;
+}
+
+std::string string_format(std::string fmt, ...)
+{
+    va_list ap;
+    char    *s;
+
+    va_start(ap, fmt);
+
+    if (vasprintf(&s, fmt.c_str(), ap) == -1) {
+        throw std::runtime_error(std::string("Could not format string.") + strerror(errno));
+    }
+
+    std::string r(s);
+
+    free(s);
+
+    va_end(ap);
+
+    return r;
+}
+
+std::vector<std::string> split(const std::string &haystack, const std::string &needle)
+{
+    auto pos = 0l;
+    auto r = std::vector<std::string>();
+
+    while (pos < haystack.length()) {
+        auto i = haystack.find(needle, pos);
+
+        if (i == std::string::npos) {
+            r.push_back(haystack.substr(pos, haystack.length() - pos));
+            break;
+        } else {
+            r.push_back(haystack.substr(pos, i - pos));
+        }
+
+        pos = i + needle.length();
+    }
+
+    return r;
+}
+
+void write_to_file(const boost::filesystem::path &filename, const std::string &text)
+{
+    int fd;
+
+    if ((fd = open(filename.string().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
+        throw std::runtime_error("Could not open file '" + filename.string() + "'.");
+    }
+
+    if (write(fd, text.c_str(), text.length()) == -1) {
+        throw std::runtime_error("Could not write to file '" + filename.string() + "'.");
+    }
+
+    if (close(fd) == -1) {
+        throw std::runtime_error("Could not close file '" + filename.string() + "'.");
+    }
 }
 
 }}

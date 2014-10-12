@@ -44,6 +44,7 @@ Options::Options(void) {
     working_directory   = fs::current_path();
     target              = "all";
     library_filename    = "hurricane.ini";
+    compilation_mode    = simulation;
 }
 
 void Options::usage(void) {
@@ -56,6 +57,9 @@ void Options::usage(void) {
     fprintf(stderr, "    <target>                               Build target, by default: 'all'.\n");
     fprintf(stderr, "    -h, --help                             Show usage.\n");
     fprintf(stderr, "    -v, --verbose                          More verbose messages.\n");
+    fprintf(stderr, "    -m, --compilation-mode=<mode>          Compilation mode, default is simulation.\n");
+    fprintf(stderr, "                                           simulation - build for simulation.\n");
+    fprintf(stderr, "                                           synthesis - build for synthesis.\n");
     fprintf(stderr, "    -C, --working-directory=<directory>    Change working directory. (%s)\n", working_directory.string().c_str());
     fprintf(stderr, "    -F, --library-filename=<directory>     The name of a library filename. (%s)\n", library_filename.string().c_str());
 }
@@ -114,6 +118,7 @@ void Options::parse(int argc, char *argv[]) {
         {"verbose",             no_argument,        NULL, 'v'},
         {"working-directory",   required_argument,  NULL, 'C'},
         {"library-filename",    required_argument,  NULL, 'F'},
+        {"compilation-mode",    required_argument,  NULL, 'm'},
         {NULL, 0, NULL, 0}
     };
 
@@ -132,6 +137,19 @@ void Options::parse(int argc, char *argv[]) {
                 verbose--;
             }
             break;
+
+        case 'm':
+            if (string("simulation") == optarg) {
+                compilation_mode = simulation;
+
+            } else if (string("synthesis") == optarg) {
+                compilation_mode = synthesis;
+
+            } else {
+                log(LOG_ERROR "Unknown compilation mode %s", optarg);
+                usage();
+                exit(2);
+            }
 
         case 'C':
             working_directory = fs::absolute(optarg);

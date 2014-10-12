@@ -22,51 +22,37 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "Library.h"
-#include "Options.h"
 
-namespace takevos {
-namespace hurricane {
+#define BOOST_TEST_MODULE FileHandle
+#include <boost/test/unit_test.hpp>
+#include <boost/test/execution_monitor.hpp>
+#include <fcntl.h>
+#include "utils.h"
+#include "FileHandle.h"
 
-Library::Library(fs::path const &library_directory) :
-    library_directory(library_directory),
-    configuration_path(library_directory / options.library_filename)
+using namespace std;
+using namespace takevos::hurricane;
+
+BOOST_AUTO_TEST_CASE(filehandle_test_1)
 {
-    pt::ini_parser::read_ini(configuration_path.string(), configuration);
-}
+    std::string     text = "Hello World";
+    auto            filename = fs::path(string_format("/tmp/test-%i.txt", (int)getpid()));
 
-void Library::walk(fs::path const &directory)
-{
-    /*
-    fs::directory_iterator end;
+    write_to_file(filename, text);
 
-    for (auto &i = fs::directory_iterator(directory); i != end; i++) {
-        auto x = *i;
-        if (is_directory(x.path())) {
-            if (exists(x.path() / options.library_filename)) {
-                options.log(LOG_NOTICE "Found library: %s", x.path().string().c_str());
-            } else {
-                walk(x.path());
-            }
+    FileHandle handle(filename);
 
-        } else {
-            options.log(LOG_NOTICE "entry: %s", x.path().string().c_str());
-            auto ext = x.path().extension();
+    handle.open();
 
-            auto j = options.source_file_handlers.find(ext);
-            if (j != options.source_file_handlers.end()) {
-                auto source_file_handler = *j;
+    BOOST_CHECK_EQUAL(handle.data_size, text.length());
+    BOOST_CHECK_EQUAL(std::string(handle.data, handle.data_size), string(text));
 
-                SourceFile(this, source_file_handler, x.path());
-            }
-        }
+    handle.close();
+    
+    BOOST_CHECK_EQUAL(handle.data_size, 0);
+
+    if (unlink(filename.string().c_str()) == -1) {
+        throw std::runtime_error("Could not unlink file '" + filename.string() + "'.");
     }
-    */
 }
 
-void Library::walk(void)
-{
-    walk(library_directory);
-}
-
-}}

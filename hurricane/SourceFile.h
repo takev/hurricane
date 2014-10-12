@@ -24,21 +24,43 @@
  */
 #ifndef TAKEVOS_HURRICANE_SOURCEFILE_H
 #define TAKEVOS_HURRICANE_SOURCEFILE_H
-#include <stdbool.h>
 #include <string>
+#include <sys/stat.h>
 #include <boost/filesystem.hpp>
-#include "LibraryConfiguration.h"
-#include "ProjectConfiguration.h"
+#include "MapQuery.h"
+#include "Tokenizer.h"
 
 namespace fs = boost::filesystem;
 
 namespace takevos {
 namespace hurricane {
 
+/** A source file.
+ */
 class SourceFile {
 public:
-    SourceFile(ProjectConfiguration const &project_configuration, LibraryConfiguration const &library_configuration, fs::path const &filename);
-    
+    fs::path                        filename;   ///< filename of the file
+    std::vector<shared_ptr<DQ> >    needs;      ///< Required objects.
+    std::vector<shared_ptr<DQ> >    provides;   ///< Objects that this file creates.
+
+    /** Open a source file.
+     * @param filename  A path the a file.
+     */
+    SourceFile(fs::path const &filename);
+
+    /** Close and unmap a file.
+     */
+    virtual ~SourceFile();
+
+    virtual void process_file(void);
+
+    inline void add_need(shared_ptr<DQ> &q) {
+        needs.push_back(q);
+    }
+
+    inline void add_provide(shared_ptr<DQ> &q) {
+        provides.push_back(q);
+    }
 };
 
 }}

@@ -35,60 +35,98 @@ namespace hurricane {
 class TokenizerRange;
 class TokenizerIterator;
 
+/** Information about a pattern that was loaded into the Tokenizer.
+ */
 struct SubPattern {
-    int                 code;
-    int                 nsub;
+    int code;   ///< Code to return when the pattern is found in the text.
+    int nsub;   ///< Number of capturing sub expressions for this pattern.
 
+    /** Initialize a SubPattern, with information about a pattern.
+     * @param code  The token code to return when a pattern was found in the text.
+     *              0 when the token should not be returned.
+     *              -1 is used as a sentinal.
+     * @param nsub  Number of capturing sub expressions for this pattern.
+     */
     SubPattern(int code, int nsub) : code(code), nsub(nsub) { }
 };
 
+/** Token found during parsing.
+ */
 struct Token {
-    int                         code;
-    std::vector<std::string>    groups;
+    static const int            sentinal = -1;
+    static const int            suppress = 0;
 
+    int                         code;       ///< Code matching the pattern.
+    std::vector<std::string>    groups;     ///< Captured sub expressions.
+
+    /** Non-initialized token.
+     */
     Token();
+
+    /** Initialize token.
+     * This constructor is used for test benches.
+     * @param code  The code belonging with the pattern.
+     * @param ...   Captures sub expressions of type (char const * cost), terminated with NULL.
+     */
     Token(int code, ...);
 
+    /** Compare if not equal.
+     * Used in unit test to compare the result with expected.
+     */
     bool operator!=(const Token &other) const;
+
+    /** Compare if equal.
+     * Used in unit test to compare the result with expected.
+     */
     bool operator==(const Token &other) const;
 };
 
+/** Output information about token.
+ * Used in unit test to visually compare result with expected.
+ */
 std::ostream &operator<<(std::ostream &os, const Token &x);
 
+/** A sparse tokenizer for source code.
+ * This tokenizer is designed to return just pieces of information from a source file at high speed.
+ */
 class Tokenizer {
 public:
-    regex_t                     combined_pattern_re;
-    std::vector<SubPattern>     sub_patterns;
+    regex_t                     combined_pattern_re;    ///< All patterns are combined in a single regular expression.
+    std::vector<SubPattern>     sub_patterns;           ///< Information about each pattern in stored here.
 
+    /** Initialize the tokenizer with a set of patterns.
+     * @param code1     The code to return when this pattern is found in the text.
+     * @param str1      The pattern to find in the text. In extended regular expression format.
+     * @param ...       More code,str pairs, followd by a single -1 as sentinal.
+     */
     Tokenizer(int code1, char const * const str1, ...);
-    Token parse(char const * const text, size_t text_size, int &offset);
-    TokenizerRange parse(char const * const text, size_t text_size);
+
+    /** Destructor.
+     * Free the regular expression.
+     */
     ~Tokenizer();
-};
 
-class TokenizerRange {
-public:
-    const Tokenizer     *tokenizer;
-    std::vector<Token>  tokens;
+    /** Find a single token in the text starting at offset.
+     * Source code will be mapped into memory and there will not be a trailing zero.
+     * Therefor the size of the text neesds to be given.
+     *
+     * @param text          The text to parse.
+     * @param text_size     The size of the text.
+     * @param offset        The offset to start parsing.
+     *                      Returns the offset after the found pattern, or -1 when pattern is not found.
+     * @return The token found with the captured sub expressions.
+     */
+    Token tokenize(char const * const text, size_t text_size, int &offset) const;
 
-    TokenizerRange(Tokenizer const * const tokenizer);
-
-    TokenizerIterator begin(void) const;
-    TokenizerIterator end(void) const;
-};
-
-class TokenizerIterator {
-public:
-    const TokenizerRange    *tokenizer_range;
-    off_t                   i;
-
-    TokenizerIterator(TokenizerRange const * const tokenizer_range, off_t i);
-
-    const TokenizerIterator &operator++();
-
-    bool operator!=(const TokenizerIterator &other) const;
-
-    Token operator*() const;
+    /** Find all tokens in the text.
+     * Source code will be mapped into memory and there will not be a trailing zero.
+     * Therefor the size of the text neesds to be given.
+     *
+     * @param text          The text to parse.
+     * @param text_size     The size of the text.
+     * @return The tokens found with the captured sub expressions.
+     */
+    std::vector<Token> tokenize(char const * const text, size_t text_size) const;
 };
 
 }}

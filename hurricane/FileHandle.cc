@@ -23,25 +23,64 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <exception>
-#include "SourceFile.h"
-#include "Options.h"
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include "FileHandle.h"
 
 namespace takevos {
 namespace hurricane {
 
-SourceFile::SourceFile(fs::path const &filename) :
-    filename(filename)
+FileHandle::FileHandle(const fs::path &filename) : filename(filename), fd(-1), data(NULL), data_size(0)
 {
 }
 
-SourceFile::~SourceFile()
+FileHandle::~FileHandle()
 {
+    assert(fd == -1 && data == NULL && data_size == 0);
 }
 
-void SourceFile::process_file(void)
+void FileHandle::open(void)
 {
+    struct stat         stats;
+
+    if ((fd = ::open(filename.string().c_str(), O_RDONLY, 0)) == -1) {
+        throw std::runtime_error("Cannot open file '" + filename.string() + "'.");
+    }
+
+    if (::fstat(fd, &stats) == -1) {
+        close();
+        throw std::runtime_error("Cannot stat file '" + filename.string() + "'.");
+    }
+    data_size = stats.st_size;
+
+    if ((data = (const char *)::mmap(NULL, data_size, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0)) == MAP_FAILED) {
+        data = NULL; // This is different from MAP_FAILED.
+        close();
+        throw std::runtime_error("Cannot map file '" + filename.string() + "'.");
+    }
 }
 
+void FileHandle::close(void)
+{
+    if (data != NULL) {
+        if (::munmap((void *)data, data_size) != 0) {
+            throw std::runtime_error("Cannot unmap file '" + filename.string() + "'.");
+        }
+        data = NULL;
+        data_size = 0;
+    }
+
+    if (fd != -1) {
+        if (::close(fd) == -1) {
+            throw std::runtime_error("Cannot close file '" + filename.string() + "'.");
+        }
+        fd = -1;
+    }
+}
 
 
 }}

@@ -32,11 +32,11 @@ using namespace takevos::hurricane;
 
 BOOST_AUTO_TEST_CASE(tokenizer_simple_1)
 {
-    Tokenizer           p(1, "a", 0);
+    Tokenizer           p(1, "a", Token::sentinal);
     const char          *test = "abac";
     std::vector<Token>  expected;
 
-    auto result = p.parse(test, strlen(test));
+    auto result = p.tokenize(test, strlen(test));
     expected.push_back(Token(1, NULL));
     expected.push_back(Token(1, NULL));
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
@@ -44,33 +44,74 @@ BOOST_AUTO_TEST_CASE(tokenizer_simple_1)
 
 BOOST_AUTO_TEST_CASE(tokenizer_groups_1)
 {
-    Tokenizer           p(2, "([0-9]+).([0-9]+).([0-9]+).([0-9]+)", 0);
+    Tokenizer           p(2, "([0-9]+).([0-9]+).([0-9]+).([0-9]+)", Token::sentinal);
     const char          *test = "foo\nbaz 127.0.0.1 -> 10.1.2.3 bar";
     std::vector<Token>  expected;
 
-    auto result = p.parse(test, strlen(test));
+    auto result = p.tokenize(test, strlen(test));
     expected.push_back(Token(2, "127", "0", "0", "1", NULL));
     expected.push_back(Token(2, "10", "1", "2", "3", NULL));
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 }
 
+
 BOOST_AUTO_TEST_CASE(tokenizer_groups_2)
 {
     Tokenizer           p(
-        1, R"||(use\s+([a-zA-Z0-9_.]+)\s*;)||",
-        2, R"||(library\s+([a-zA-Z0-9_.]+)\s*;)||",
-        0
+        1, R"||(use[[:space:]]+([a-zA-Z0-9_.]+)[[:space:]]*;)||",
+        Token::sentinal
     );
 
     const char          *test =
         "begin\n"
         "library foo;\n"
-        "use foo.bar;\n"
+        "use\tfoo.bar;\n"
         "end;\n";
 
     std::vector<Token>  expected;
 
-    auto result = p.parse(test, strlen(test));
+    auto result = p.tokenize(test, strlen(test));
+    expected.push_back(Token(1, "foo.bar", NULL));
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
+}
+
+BOOST_AUTO_TEST_CASE(tokenizer_groups_3)
+{
+    Tokenizer           p(
+        1, R"__(use\s+([a-zA-Z0-9_.]+)\s*;)__",
+        Token::sentinal
+    );
+
+    const char          *test =
+        "begin\n"
+        "library foo;\n"
+        "use\tfoo.bar;\n"
+        "end;\n";
+
+    std::vector<Token>  expected;
+
+    auto result = p.tokenize(test, strlen(test));
+    expected.push_back(Token(1, "foo.bar", NULL));
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
+}
+
+BOOST_AUTO_TEST_CASE(tokenizer_groups_4)
+{
+    Tokenizer           p(
+        1, R"||(use[[:space:]]+([a-zA-Z0-9_.]+)[[:space:]]*;)||",
+        2, R"||(library[[:space:]]+([a-zA-Z0-9_.]+)[[:space:]]*;)||",
+        Token::sentinal
+    );
+
+    const char          *test =
+        "begin\n"
+        "library foo;\n"
+        "use\tfoo.bar;\n"
+        "end;\n";
+
+    std::vector<Token>  expected;
+
+    auto result = p.tokenize(test, strlen(test));
     expected.push_back(Token(2, "foo", NULL));
     expected.push_back(Token(1, "foo.bar", NULL));
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());

@@ -30,9 +30,6 @@
 #include <tuple>
 #include <boost/filesystem.hpp>
 
-using namespace std;
-using namespace boost::filesystem;
-
 namespace takevos {
 namespace hurricane {
 
@@ -41,7 +38,7 @@ namespace hurricane {
  * @param path  Path the split.
  * @return (directory, filename)
  */
-tuple<path,path> path_split(path const & path) __attribute__((pure));
+std::tuple<boost::filesystem::path,boost::filesystem::path> path_split(boost::filesystem::path const & path) __attribute__((pure));
 
 /** Find a file by traversing each directory in the path.
  *
@@ -49,7 +46,7 @@ tuple<path,path> path_split(path const & path) __attribute__((pure));
  * @param filename  The name of the file to find in the path.
  * @return A list of directories where filename is found. Ordered from root first.
  */
-vector<path> super_directories_with_file(path const & directory, path const & filename);
+std::vector<boost::filesystem::path> super_directories_with_file(boost::filesystem::path const & directory, boost::filesystem::path const & filename);
 
 /** Find the furthest super directory containing a file.
  *
@@ -57,7 +54,7 @@ vector<path> super_directories_with_file(path const & directory, path const & fi
  * @param filename  The filename to search.
  * @return The super directory furthest toward the root that contains the filename.
  */
-path furthest_super_directory_with_file(path const & directory, path const & filename);
+boost::filesystem::path furthest_super_directory_with_file(boost::filesystem::path const & directory, boost::filesystem::path const & filename);
 
 /** Find the nearest super directory containing a file.
  *
@@ -65,13 +62,35 @@ path furthest_super_directory_with_file(path const & directory, path const & fil
  * @param filename  The filename to search.
  * @return The super directory nearest to the search-start that contains the filename.
  */
-path nearest_super_directory_with_file(path const & directory, path const & filename);
+boost::filesystem::path nearest_super_directory_with_file(boost::filesystem::path const & directory, boost::filesystem::path const & filename);
 
 
 /** Find all files with a certain extension by tranversing into subdirectories.
  */
-vector<path> search_file_in_subdirectories(path const & directory, vector<string> extensions);
+std::vector<boost::filesystem::path> search_file_in_subdirectories(boost::filesystem::path const & directory, std::vector<std::string> extensions);
+
+/** Format a string.
+ */
+std::string string_format(std::string fmt, ...);
+
+/** Split a string.
+ */
+std::vector<std::string> split(const std::string &haystack, const std::string &needle);
+
+/** Write to a file.
+ */
+void write_to_file(const boost::filesystem::path &filename, const std::string &text);
 
 }}
+
+namespace std {
+
+/** To string version 
+ */
+static inline std::string to_string(const std::string &x) {
+    return x;
+}
+
+}
 
 #endif

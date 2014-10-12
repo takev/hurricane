@@ -42,6 +42,9 @@ namespace hurricane {
 
 class Options {
 public:
+    static const int        simulation  = 1;
+    static const int        synthesis   = 2;
+
     std::string             application;
     char                    verbose;
     std::string             target;
@@ -49,6 +52,7 @@ public:
     fs::path                project_directory;
     fs::path                current_library_directory;
     fs::path                library_filename;
+    int                     compilation_mode;
 
     Options(void);
 

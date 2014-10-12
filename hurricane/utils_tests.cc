@@ -29,6 +29,36 @@
 #include "utils.h"
 
 using namespace takevos::hurricane;
+using namespace std;
+using namespace boost::filesystem;
+
+namespace fs = boost::filesystem;
+
+struct F {
+    fs::path base_path;
+
+    F() {
+        base_path = string_format("/tmp/utils-tests-%i", (int)getpid());
+        create_directory(base_path);
+
+        // Just in case symbolic links are pointing from /tmp
+        base_path = canonical(base_path);
+
+        create_directory(base_path / "foo");
+        write_to_file(base_path / "foo" / "hurricane.ini", string("Hello World"));
+        create_directory(base_path / "foo" / "bar");
+        write_to_file(base_path / "foo" / "bar" / "hurricane.ini", string("Hello World"));
+        create_directory(base_path / "foo" / "bar" / "baz");
+        create_directory(base_path / "foo" / "baz");
+        write_to_file(base_path / "foo" / "baz" / "test.vhd", string("Hello World"));
+    }
+
+    ~F() {
+        remove_all(base_path);
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(utils, F)
 
 BOOST_AUTO_TEST_CASE(path_split_1)
 {
@@ -95,7 +125,7 @@ BOOST_AUTO_TEST_CASE(path_split_9)
 
 BOOST_AUTO_TEST_CASE(super_directories_with_file_1)
 {
-    vector<path>    result = super_directories_with_file(absolute("testcases"), "hurricane.ini");
+    vector<path>    result = super_directories_with_file(base_path, "hurricane.ini");
     vector<path>    expected = {};
 
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
@@ -103,56 +133,70 @@ BOOST_AUTO_TEST_CASE(super_directories_with_file_1)
 
 BOOST_AUTO_TEST_CASE(super_directories_with_file_2)
 {
-    vector<path>    result = super_directories_with_file(absolute("testcases/foo"), "hurricane.ini");
-    vector<path>    expected = {absolute("testcases/foo")};
+    vector<path>    result = super_directories_with_file(base_path / "foo", "hurricane.ini");
+    vector<path>    expected = {base_path / "foo"};
 
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 }
 
 BOOST_AUTO_TEST_CASE(super_directories_with_file_3)
 {
-    BOOST_CHECK_THROW(super_directories_with_file(absolute("testcases/foo/"), "hurricane.ini"), invalid_argument);
+    BOOST_CHECK_THROW(super_directories_with_file(base_path / "foo/", "hurricane.ini"), invalid_argument);
 }
 
 BOOST_AUTO_TEST_CASE(super_directories_with_file_4)
 {
-    vector<path>    result = super_directories_with_file(absolute("testcases/foo/bar"), "hurricane.ini");
-    vector<path>    expected = {absolute("testcases/foo"), absolute("testcases/foo/bar")};
+    vector<path>    result = super_directories_with_file(base_path / "foo" / "bar", "hurricane.ini");
+    vector<path>    expected = {base_path / "foo", base_path / "foo" / "bar"};
 
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 }
 
 BOOST_AUTO_TEST_CASE(super_directories_with_file_5)
 {
-    vector<path>    result = super_directories_with_file(absolute("testcases/foo/bar/baz"), "hurricane.ini");
-    vector<path>    expected = {absolute("testcases/foo"), absolute("testcases/foo/bar")};
+    vector<path>    result = super_directories_with_file(base_path / "foo" / "bar" / "baz", "hurricane.ini");
+    vector<path>    expected = {base_path / "foo", base_path / "foo" / "bar"};
 
     BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 }
 
 BOOST_AUTO_TEST_CASE(super_directories_with_file_6)
 {
-    BOOST_CHECK_THROW(super_directories_with_file(absolute("testcases/wrong/bar/baz"), "hurricane.ini"), runtime_error);
+    BOOST_CHECK_THROW(super_directories_with_file(base_path / "wrong" / "bar" / "baz", "hurricane.ini"), runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(super_directories_with_file_7)
 {
-    BOOST_CHECK_THROW(super_directories_with_file(absolute("testcases/foo/bar/wrong"), "hurricane.ini"), runtime_error);
+    BOOST_CHECK_THROW(super_directories_with_file(base_path / "foo" / "bar" / "wrong", "hurricane.ini"), runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(nearest_super_directory_with_file_4)
 {
-    auto result = nearest_super_directory_with_file(absolute("testcases/foo/bar"), "hurricane.ini");
-    auto expected = absolute("testcases/foo/bar");
+    auto result = nearest_super_directory_with_file(base_path / "foo" / "bar", "hurricane.ini");
+    auto expected = base_path / "foo" / "bar";
 
     BOOST_CHECK_EQUAL(result, expected);
 }
 
 BOOST_AUTO_TEST_CASE(furthest_super_directory_with_file_4)
 {
-    auto result = furthest_super_directory_with_file(absolute("testcases/foo/bar"), "hurricane.ini");
-    auto expected = absolute("testcases/foo");
+    auto result = furthest_super_directory_with_file(base_path / "foo" / "bar", "hurricane.ini");
+    auto expected = base_path / "foo";
 
     BOOST_CHECK_EQUAL(result, expected);
 }
 
+BOOST_AUTO_TEST_CASE(string_format_1)
+{
+    BOOST_CHECK_EQUAL(string_format("Hello %i", 15), string("Hello 15"));
+}
+
+BOOST_AUTO_TEST_CASE(string_split_1)
+{
+    auto result = split("Hello World", " ");
+    auto expected = std::vector<std::string>{"Hello", "World"};
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
+}
+
+BOOST_AUTO_TEST_SUITE_END()

@@ -35,35 +35,35 @@ BOOST_AUTO_TEST_CASE(mapquery_simple_1)
 {
     auto r = DQ("Hello", "World");
 
-    BOOST_CHECK_EQUAL(r.to_string(), "Hello:World");
+    BOOST_CHECK_EQUAL(r.string(), "Hello:World");
 }
 
 BOOST_AUTO_TEST_CASE(mapquery_and_1)
 {
     auto r = DQ("Hello", "World") & DQ("Foo", "Bar");
 
-    BOOST_CHECK_EQUAL(r.to_string(), "(Hello:World&Foo:Bar)");
+    BOOST_CHECK_EQUAL(r.string(), "(Hello:World&Foo:Bar)");
 }
 
 BOOST_AUTO_TEST_CASE(mapquery_and_2)
 {
     auto r = DQ("Hello", "World") & DQ("Foo", "Bar") & DQ("1", "2");
 
-    BOOST_CHECK_EQUAL(r.to_string(), "(Hello:World&Foo:Bar&1:2)");
+    BOOST_CHECK_EQUAL(r.string(), "(Hello:World&Foo:Bar&1:2)");
 }
 
 BOOST_AUTO_TEST_CASE(mapquery_or_1)
 {
     auto r = DQ("Hello", "World") | DQ("Foo", "Bar");
 
-    BOOST_CHECK_EQUAL(r.to_string(), "(Hello:World|Foo:Bar)");
+    BOOST_CHECK_EQUAL(r.string(), "(Hello:World|Foo:Bar)");
 }
 
 BOOST_AUTO_TEST_CASE(mapquery_complex_1)
 {
     auto r = (DQ("Hello", "World") | DQ("Foo", "Bar")) & DQ("1", "2") & DQ("3", "4");
 
-    BOOST_CHECK_EQUAL(r.to_string(), "((Hello:World|Foo:Bar)&1:2&3:4)");
+    BOOST_CHECK_EQUAL(r.string(), "((Hello:World|Foo:Bar)&1:2&3:4)");
 }
 
 
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(mapquery_complex_2)
 {
     auto r = (DQ("Hello", "World") & DQ("Foo", "Bar")) | (DQ("1", "2") & DQ("3", "4"));
 
-    BOOST_CHECK_EQUAL(r.to_string(), "((Hello:World&Foo:Bar)|(1:2&3:4))");
+    BOOST_CHECK_EQUAL(r.string(), "((Hello:World&Foo:Bar)|(1:2&3:4))");
 }
 
 BOOST_AUTO_TEST_CASE(mapquery_compare_1)

@@ -22,44 +22,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <exception>
-#include <thread>
-#include "SourceFile.h"
-#include "Options.h"
-#include "FileHandle.h"
-#include "md5.h"
+#ifndef TAKEVOS_HURRICANE_MD5_H
+#define TAKEVOS_HURRICANE_MD5_H
+
+#include <string>
+#include <vector>
+#include <tuple>
+#include "numbers.h"
 
 namespace takevos {
 namespace hurricane {
 
-SourceFile::SourceFile(fs::path const &filename) :
-    filename(filename)
+uint128_t MD5(const char *data, size_t data_size);
+
+static inline uint128_t MD5(std::string text)
 {
+   return MD5(text.c_str(), text.length());
 }
-
-SourceFile::~SourceFile()
-{
-}
-
-void SourceFile::process_file(void)
-{
-    FileHandle handle(filename);
-
-    handle.open();
-
-    auto parse_thread = std::thread([this,&handle](){
-        parse(handle.data, handle.data_size);
-    });
-
-    auto md5hash_thread = std::thread([this,&handle](){
-        md5hash = MD5(handle.data, handle.data_size);
-    });
-
-    parse_thread.join();
-    md5hash_thread.join();
-    handle.close();
-}
-
-
 
 }}
+
+#endif

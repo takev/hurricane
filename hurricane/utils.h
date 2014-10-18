@@ -29,9 +29,11 @@
 #include <vector>
 #include <tuple>
 #include <boost/filesystem.hpp>
+#include <CoreServices/CoreServices.h>
 
 namespace takevos {
 namespace hurricane {
+
 
 /** Split a path into a directory and filename part.
  *
@@ -69,28 +71,19 @@ boost::filesystem::path nearest_super_directory_with_file(boost::filesystem::pat
  */
 std::vector<boost::filesystem::path> search_file_in_subdirectories(boost::filesystem::path const & directory, std::vector<std::string> extensions);
 
-/** Format a string.
- */
-std::string string_format(std::string fmt, ...);
 
-/** Split a string.
- */
-std::vector<std::string> split(const std::string &haystack, const std::string &needle);
+template <typename T>
+static inline bool contains(std::vector<T> &list, T &item) {
+    for (auto &x: list) {
+        if (x == item) {
+            return true;
+        }
+    }
+    return false;
+}
 
-/** Write to a file.
- */
-void write_to_file(const boost::filesystem::path &filename, const std::string &text);
 
 }}
 
-namespace std {
-
-/** To string version 
- */
-static inline std::string to_string(const std::string &x) {
-    return x;
-}
-
-}
 
 #endif

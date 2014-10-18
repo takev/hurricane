@@ -28,6 +28,7 @@
 #include <boost/test/execution_monitor.hpp>
 #include <fcntl.h>
 #include "utils.h"
+#include "strings.h"
 #include "FileHandle.h"
 
 using namespace std;

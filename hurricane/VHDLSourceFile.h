@@ -29,7 +29,7 @@
 namespace takevos {
 namespace hurricane {
 
-class VHDLSourceFile : SourceFile {
+class VHDLSourceFile : public SourceFile {
 public:
     static const int library_pragma             = 1;
     static const int translate_pragma           = 2;
@@ -56,7 +56,7 @@ private:
     void handle_package_declaration(std::string name);
     void handle_entity_declaration(std::string name);
     void handle_architecture_declaration(std::string name, std::string entity_name);
-    void parse(char const * const text, size_t text_size);
+    virtual void parse(char const * const text, size_t text_size);
 };
 
 }}

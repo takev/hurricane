@@ -22,44 +22,26 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <exception>
-#include <thread>
-#include "SourceFile.h"
-#include "Options.h"
-#include "FileHandle.h"
-#include "md5.h"
 
-namespace takevos {
-namespace hurricane {
+#define BOOST_TEST_MODULE utils
+#include <boost/test/unit_test.hpp>
+#include <boost/test/execution_monitor.hpp>
+#include "numbers.h"
 
-SourceFile::SourceFile(fs::path const &filename) :
-    filename(filename)
+using namespace std;
+
+
+BOOST_AUTO_TEST_CASE(numbers_be128toh_1)
 {
+    __uint128_t result = be128toh(0x00112233445566778899aabbccddeeff_ULLL);
+#ifdef __LITTLE_ENDIAN__
+    __uint128_t expected = 0xffeeddccbbaa99887766554433221100_ULLL;
+#elif __BIG_ENDIAN__
+    __uint128_t expected = 0x00112233445566778899aabbccddeeff_ULLL;
+#else
+#error "Unknown endian
+#endif
+
+    BOOST_CHECK_EQUAL(result, expected);
 }
 
-SourceFile::~SourceFile()
-{
-}
-
-void SourceFile::process_file(void)
-{
-    FileHandle handle(filename);
-
-    handle.open();
-
-    auto parse_thread = std::thread([this,&handle](){
-        parse(handle.data, handle.data_size);
-    });
-
-    auto md5hash_thread = std::thread([this,&handle](){
-        md5hash = MD5(handle.data, handle.data_size);
-    });
-
-    parse_thread.join();
-    md5hash_thread.join();
-    handle.close();
-}
-
-
-
-}}

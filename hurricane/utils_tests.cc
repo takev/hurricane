@@ -26,6 +26,7 @@
 #define BOOST_TEST_MODULE utils
 #include <boost/test/unit_test.hpp>
 #include <boost/test/execution_monitor.hpp>
+#include "strings.h"
 #include "utils.h"
 
 using namespace takevos::hurricane;
@@ -184,19 +185,6 @@ BOOST_AUTO_TEST_CASE(furthest_super_directory_with_file_4)
     auto expected = base_path / "foo";
 
     BOOST_CHECK_EQUAL(result, expected);
-}
-
-BOOST_AUTO_TEST_CASE(string_format_1)
-{
-    BOOST_CHECK_EQUAL(string_format("Hello %i", 15), string("Hello 15"));
-}
-
-BOOST_AUTO_TEST_CASE(string_split_1)
-{
-    auto result = split("Hello World", " ");
-    auto expected = std::vector<std::string>{"Hello", "World"};
-
-    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

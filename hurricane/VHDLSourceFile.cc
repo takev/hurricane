@@ -26,6 +26,7 @@
 #include "VHDLSourceFile.h"
 #include "Tokenizer.h"
 #include "Options.h"
+#include "utils.h"
 
 namespace takevos {
 namespace hurricane {
@@ -38,7 +39,7 @@ const Tokenizer VHDLSourceFile::vhdl_tokenizer(
     Token::suppress,            R"__(--.*?$)__",
     library_statement,          R"__(library\s+([_[:alnum:]]+)\s*;)__",
     use_statement,              R"__(use\s+([_.[:alnum:]]+)\s*;)__",
-    entity_instantiation,       R"__(\w+\s*:\s*(?:entity\s+)?(?:([_[:alnum:]]+)\.)?([_[:alnum:]]+)(?:\([_[:alnum:]]+)\))?\s+(?:generic|port)\s+map\s*\()__",
+    entity_instantiation,       R"__(\w+\s*:\s*(?:entity\s+)?(?:([_[:alnum:]]+)\.)?([_[:alnum:]]+)(?:\(([_[:alnum:]]+)\))?\s+(?:generic|port)\s+map\s*\()__",
     package_declaration,        R"__(package\s+(\w+)\s+is\s+)__",
     entity_declaration,         R"__(entity\s+(\w+)\s+is\s+)__",
     architecture_declaration,   R"__(architecture\s+(\w+)\s+of\s+(\w+)\s+is\s+)__",
@@ -46,8 +47,9 @@ const Tokenizer VHDLSourceFile::vhdl_tokenizer(
 );
 
 VHDLSourceFile::VHDLSourceFile(fs::path const &filename) :
-    SourceFile(filename), destination_library("workd"), translating(true)
+    SourceFile(filename), destination_library("work"), translating(true)
 {
+    //imported_libraries.push_back("work");
 }
 
 void VHDLSourceFile::handle_library_pragma(std::string name)
@@ -85,19 +87,21 @@ void VHDLSourceFile::handle_use_statement(std::string path)
         return;
     }
 
-    auto parts = split(name, ".");
+    auto parts = split_string(path, ".");
 
     // The first part is a library if it was imported, otherwise it is a package/entity
     // in the work library.
-    i = 0;
-    if (contains(parts[i], imported_libraries)) {
+    auto i = 0;
+    auto library = std::string();
+
+    if (contains(imported_libraries, parts[i])) {
         library = parts[i++];
     } else {
         library = "work";
     }
 
     // The second part is a package/entity.
-    name = parts[i++];
+    auto name = parts[i++];
 
     // We don't care about the third part of the use statement.
     add_need(DQ("lib", library) & (DQ("pkg", name) | DQ("ent", name)));
@@ -180,7 +184,7 @@ void VHDLSourceFile::parse(char const * const text, size_t text_size)
             handle_use_statement(token.groups[0]);
             break;
         case entity_instantiation:
-            handle_entity_instantiation(token.groups[0]);
+            handle_entity_instantiation(token.groups[0], token.groups[1], token.groups[2]);
             break;
         case package_declaration:
             handle_package_declaration(token.groups[0]);

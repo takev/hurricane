@@ -27,21 +27,31 @@
 #include <string>
 #include <sys/stat.h>
 #include <boost/filesystem.hpp>
+#include <memory.h>
+#include <string>
+#include <map>
 #include "MapQuery.h"
 #include "Tokenizer.h"
+#include "numbers.h"
 
 namespace fs = boost::filesystem;
 
 namespace takevos {
 namespace hurricane {
 
+using DQ = MapQuery<std::string,std::string>;
+using DQMap = std::map<std::string,std::string>;
+
+
+
 /** A source file.
  */
 class SourceFile {
 public:
-    fs::path                        filename;   ///< filename of the file
-    std::vector<shared_ptr<DQ> >    needs;      ///< Required objects.
-    std::vector<shared_ptr<DQ> >    provides;   ///< Objects that this file creates.
+    fs::path            filename;   ///< filename of the file
+    uint128_t           md5hash;
+    std::vector<DQ>     needs;      ///< Required objects.
+    std::vector<DQMap>  provides;   ///< Objects that this file creates.
 
     /** Open a source file.
      * @param filename  A path the a file.
@@ -54,13 +64,15 @@ public:
 
     virtual void process_file(void);
 
-    inline void add_need(shared_ptr<DQ> &q) {
+    inline void add_need(const DQ &q) {
         needs.push_back(q);
     }
 
-    inline void add_provide(shared_ptr<DQ> &q) {
-        provides.push_back(q);
+    inline void add_provide(const DQ &q) {
+        provides.push_back(q.map());
     }
+
+    virtual void parse(char const * const text, size_t text_size) = 0;
 };
 
 }}

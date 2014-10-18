@@ -22,44 +22,40 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <exception>
-#include <thread>
-#include "SourceFile.h"
-#include "Options.h"
-#include "FileHandle.h"
-#include "md5.h"
+#ifndef TAKEVOS_HURRICANE_STRINGS_H
+#define TAKEVOS_HURRICANE_STRINGS_H
+
+#include <string>
+#include <vector>
+#include <tuple>
+#include <boost/filesystem.hpp>
 
 namespace takevos {
 namespace hurricane {
 
-SourceFile::SourceFile(fs::path const &filename) :
-    filename(filename)
-{
-}
+/** Format a string.
+ */
+std::string string_format(std::string fmt, ...);
 
-SourceFile::~SourceFile()
-{
-}
+/** Split a string.
+ */
+std::vector<std::string> split_string(const std::string &haystack, const std::string &needle);
 
-void SourceFile::process_file(void)
-{
-    FileHandle handle(filename);
-
-    handle.open();
-
-    auto parse_thread = std::thread([this,&handle](){
-        parse(handle.data, handle.data_size);
-    });
-
-    auto md5hash_thread = std::thread([this,&handle](){
-        md5hash = MD5(handle.data, handle.data_size);
-    });
-
-    parse_thread.join();
-    md5hash_thread.join();
-    handle.close();
-}
-
+/** Write to a file.
+ */
+void write_to_file(const boost::filesystem::path &filename, const std::string &text);
 
 
 }}
+
+namespace std {
+
+/** To string version 
+ */
+static inline std::string to_string(const std::string &x) {
+    return x;
+}
+
+}
+
+#endif

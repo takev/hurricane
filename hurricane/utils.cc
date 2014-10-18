@@ -28,6 +28,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include "utils.h"
+#include "numbers.h"
 
 namespace takevos {
 namespace hurricane {
@@ -105,62 +106,5 @@ std::vector<boost::filesystem::path> search_file_in_subdirectories(boost::filesy
     return tmp;
 }
 
-std::string string_format(std::string fmt, ...)
-{
-    va_list ap;
-    char    *s;
-
-    va_start(ap, fmt);
-
-    if (vasprintf(&s, fmt.c_str(), ap) == -1) {
-        throw std::runtime_error(std::string("Could not format string.") + strerror(errno));
-    }
-
-    std::string r(s);
-
-    free(s);
-
-    va_end(ap);
-
-    return r;
-}
-
-std::vector<std::string> split(const std::string &haystack, const std::string &needle)
-{
-    auto pos = 0l;
-    auto r = std::vector<std::string>();
-
-    while (pos < haystack.length()) {
-        auto i = haystack.find(needle, pos);
-
-        if (i == std::string::npos) {
-            r.push_back(haystack.substr(pos, haystack.length() - pos));
-            break;
-        } else {
-            r.push_back(haystack.substr(pos, i - pos));
-        }
-
-        pos = i + needle.length();
-    }
-
-    return r;
-}
-
-void write_to_file(const boost::filesystem::path &filename, const std::string &text)
-{
-    int fd;
-
-    if ((fd = open(filename.string().c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
-        throw std::runtime_error("Could not open file '" + filename.string() + "'.");
-    }
-
-    if (write(fd, text.c_str(), text.length()) == -1) {
-        throw std::runtime_error("Could not write to file '" + filename.string() + "'.");
-    }
-
-    if (close(fd) == -1) {
-        throw std::runtime_error("Could not close file '" + filename.string() + "'.");
-    }
-}
 
 }}

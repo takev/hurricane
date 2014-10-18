@@ -29,6 +29,21 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>md5_tests.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>8</integer>
+		</dict>
+		<key>numbers_tests.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
+		</dict>
+		<key>strings_tests.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>7</integer>
+		</dict>
 		<key>utils_tests.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
@@ -63,6 +78,21 @@
 			<true/>
 		</dict>
 		<key>68F7781E19E97BB900BF866A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>68F7782F19ECF05600BF866A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>68F7783F19EDC82A00BF866A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>68F7784F19EDCA8B00BF866A</key>
 		<dict>
 			<key>primary</key>
 			<true/>

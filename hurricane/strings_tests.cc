@@ -22,44 +22,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <exception>
-#include <thread>
-#include "SourceFile.h"
-#include "Options.h"
-#include "FileHandle.h"
-#include "md5.h"
 
-namespace takevos {
-namespace hurricane {
+#define BOOST_TEST_MODULE strings
+#include <boost/test/unit_test.hpp>
+#include <boost/test/execution_monitor.hpp>
+#include "strings.h"
 
-SourceFile::SourceFile(fs::path const &filename) :
-    filename(filename)
+using namespace takevos::hurricane;
+using namespace std;
+
+BOOST_AUTO_TEST_CASE(string_format_1)
 {
+    BOOST_CHECK_EQUAL(string_format("Hello %i", 15), string("Hello 15"));
 }
 
-SourceFile::~SourceFile()
+BOOST_AUTO_TEST_CASE(string_split_1)
 {
+    auto result = split_string("Hello World", " ");
+    auto expected = std::vector<std::string>{"Hello", "World"};
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(result.begin(), result.end(), expected.begin(), expected.end());
 }
 
-void SourceFile::process_file(void)
-{
-    FileHandle handle(filename);
-
-    handle.open();
-
-    auto parse_thread = std::thread([this,&handle](){
-        parse(handle.data, handle.data_size);
-    });
-
-    auto md5hash_thread = std::thread([this,&handle](){
-        md5hash = MD5(handle.data, handle.data_size);
-    });
-
-    parse_thread.join();
-    md5hash_thread.join();
-    handle.close();
-}
-
-
-
-}}
